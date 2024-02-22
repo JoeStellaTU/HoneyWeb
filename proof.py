@@ -1,41 +1,38 @@
-import socket
-import threading
+# Recursive Honeypot Network Proof of Concept
 
-def handle_connection(client_socket):
-    # This function handles the incoming connection and simulates a response
-    response = "Welcome to the honeypot!\nUsername: "
-    client_socket.send(response.encode())
-    
-    # You can log the interaction or perform further analysis here
-    
-    # Close the connection
-    client_socket.close()
+import random
+import time
 
-def start_honeypot(bind_ip, bind_port):
-    # Create a socket object
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    
-    # Bind the socket to a specific IP and port
-    server.bind((bind_ip, bind_port))
-    
-    # Listen for incoming connections
-    server.listen(5)
-    
-    print(f"[*] Listening on {bind_ip}:{bind_port}")
-    
+class Honeypot:
+    def __init__(self, name):
+        self.name = name
+        self.spawned_honeypots = []
+
+    def engage(self, attacker_ip):
+        print(f"{self.name} engaged by {attacker_ip}")
+        # Log attacker's actions or simulate responses here
+
+        # Simulate spawning new honeypots
+        if random.random() < 0.5:
+            new_honeypot = Honeypot(f"{self.name}_spawned_{len(self.spawned_honeypots) + 1}")
+            self.spawned_honeypots.append(new_honeypot)
+            print(f"New honeypot '{new_honeypot.name}' spawned!")
+
+            # Recursively engage the new honeypot
+            new_honeypot.engage(attacker_ip)
+
+def main():
+    initial_honeypot = Honeypot("Initial_Honeypot")
+    print(f"Deployed initial honeypot: {initial_honeypot.name}")
+
     while True:
-        # Accept incoming connection
-        client, addr = server.accept()
-        
-        print(f"[*] Accepted connection from: {addr[0]}:{addr[1]}")
-        
-        # Handle the connection in a new thread
-        client_handler = threading.Thread(target=handle_connection, args=(client,))
-        client_handler.start()
+        attacker_ip = input("Enter attacker IP (or 'exit' to quit): ")
+        if attacker_ip.lower() == "exit":
+            break
+
+        # Engage the initial honeypot
+        initial_honeypot.engage(attacker_ip)
 
 if __name__ == "__main__":
-    # Set the IP and port to bind the honeypot
-    honeypot_ip = "0.0.0.0"  # Listen on all available interfaces
-    honeypot_port = 23  # Telnet port
-    
-    start_honeypot(honeypot_ip, honeypot_port)
+    main()
+
