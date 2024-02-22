@@ -1,0 +1,44 @@
+@startuml firstUML
+class Honeypot {
+  - ipAddress: String
+  - port: int
+  - activityLog: List<String>
+  + engage(attackerRequest: String): void
+}
+
+class RecursiveHoneypot {
+  - subHoneypots: List<RecursiveHoneypot>
+  - expandThreshold: int
+  + engage(attackerRequest: String): void
+}
+
+Honeypot <|-- RecursiveHoneypot
+@enduml
+
+@startuml sequenceUML
+actor Attacker
+participant Honeypot
+participant RecursiveHoneypot
+
+Attacker -> Honeypot: Send request
+activate Honeypot
+Honeypot -> Honeypot: Log activity
+if (Activity count > expandThreshold) then (yes)
+  Honeypot -> RecursiveHoneypot: Create child
+  activate RecursiveHoneypot
+  RecursiveHoneypot -> RecursiveHoneypot: Inherit session
+  RecursiveHoneypot -> Attacker: Continue monitoring
+  deactivate RecursiveHoneypot
+else (no)
+  Honeypot -> Attacker: Continue monitoring
+endif
+deactivate Honeypot
+@enduml
+
+@startuml stateUML
+[*] --> Idle
+Idle --> Engaged: Attacker request
+Engaged --> Expanding: Activity count > expandThreshold
+Expanding --> Idle: Child created
+@enduml
+
